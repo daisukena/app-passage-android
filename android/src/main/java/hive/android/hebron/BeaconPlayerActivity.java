@@ -44,6 +44,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     private static Map<String, Integer> BGresume;
     private static Map<Integer, Integer> total;
 
+    private static Integer SCENE = 0;
+
     private static Integer newPOS = 0;
     private static Integer cPOS = 0;
     private static Integer pPOS = 0;
@@ -60,7 +62,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     private static Integer cBGplayer = 11;
 
     private static String ctrl = "Y";
-    private static Integer SCENE = 0;
     private static Integer ctrlrsv = 0;
     private static Integer ctrlNrsv = 0;
     private static Integer ctrlPrsv = 0;
@@ -135,6 +136,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTresume.put(8, 0);
         PTresume.put(9, 0);
         PTresume.put(10, 0);
+        PTresume.put(11, 0);
 
         BGresume = new HashMap<String, Integer>();
         BGresume.put("00", 0);
@@ -232,11 +234,11 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 }
 
 
-                if (!newPOS.equals(cPOS) && newPOS != 0) {
+                if (!newPOS.equals(cPOS) && !newPOS.equals(0)) {
                     newTRACK = "a" + String.format("%04d", SCENE * 100 + newPOS);
                     PTctrlGet();
                     //wait once before scene change
-                    if (ctrlrsv == 0 && (ctrl.contains("N") || ctrl.contains("P") || ctrl.contains("S") || ctrl.contains("V"))) {
+                    if (ctrlrsv.equals(0) && (ctrl.contains("N") || ctrl.contains("P") || ctrl.contains("S") || ctrl.contains("V"))) {
                         ctrlrsv = 1;
                         return;
                     } else {
@@ -282,15 +284,18 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
         });
 
-//        try {
-//            AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/a1.mp3");
-//            audio.get(0).setDataSource(raw.getFileDescriptor());
-//            audio.get(0).prepare();
-//            audio.get(0).start();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        for (int i = 0; i < 12; i++) {
+            audio.get(i).setVolume(0, 0);
+        }
 
+        try {
+            AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/a1.mp3");
+            audio.get(0).setDataSource(raw.getFileDescriptor());
+            audio.get(0).prepare();
+            audio.get(0).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("hebron", IDENTIFIER_UUID, null, null));
         } catch (RemoteException e) {
@@ -321,6 +326,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             PTresume.put(8, 0);
             PTresume.put(9, 0);
             PTresume.put(10, 0);
+            PTresume.put(11, 0);
             newTRACK = "a" + String.format("%04d", SCENE * 100 + newPOS);
         }
     }
@@ -413,9 +419,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             int loc = str.indexOf("P");
             newBGTRACK = mid(str, loc + 2, 2);
             volume = ((double) Integer.valueOf(mid(str, loc + 4, 3))) / 100;
-
             BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
-
             if (!newBGTRACK.equals(cBGTRACK)) {
                 FadeOut(0.2, 0.8, audio.get(cBGplayer));
                 BGplayNew();
