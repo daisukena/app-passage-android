@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
@@ -25,6 +26,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
@@ -284,18 +287,14 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
         });
 
-        for (int i = 0; i < 12; i++) {
-            audio.get(i).setVolume(0, 0);
-        }
-
-        try {
-            AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/a1.mp3");
-            audio.get(0).setDataSource(raw.getFileDescriptor());
-            audio.get(0).prepare();
-            audio.get(0).start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/a1.mp3");
+//            audio.get(0).setDataSource(raw.getFileDescriptor());
+//            audio.get(0).prepare();
+//            audio.get(0).start();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("hebron", IDENTIFIER_UUID, null, null));
         } catch (RemoteException e) {
@@ -331,30 +330,30 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-
-    private static void FadeOut(double speed, double deltaTime, MediaPlayer audio) {
-        double volume = 1;
-        volume -= speed * deltaTime;
-        audio.setVolume(1, (float) volume);
-    }
-
     private void PTplay() {
         PTresume.put(pPOS, audio.get(pPOS).getCurrentPosition() / 1000 - 2);
         PTfadeoutCtrler.add(pPOS);
         PTfadeoutTask += 1;
 
-        FadeOut(0.2, 0.8, audio.get(pPOS));
+        FadeOut(0.2, 0.8, audio.get(pPOS), new Runnable() {
+            @Override
+            public void run() {
+                PTplayNew();
+            }
+        });
 
         PTplayCtrler.add(newPOS);
         PTplayTrack.add(newTRACK);
         PTplayTask += 1;
-
-        PTplayNew();
     }
 
     private void PTplayNew() {
-        FadeOut(0, 1, audio.get(PTfadeoutCtrler.get(0)));
-        PTstop();
+        FadeOut(0, 1, audio.get(PTfadeoutCtrler.get(0)), new Runnable() {
+            @Override
+            public void run() {
+                PTstop();
+            }
+        });
 
         PTstopCtrler.add(PTfadeoutCtrler.get(0));
         PTstopTask += 1;
@@ -362,7 +361,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTfadeoutTask -= 1;
 
 
-        audio.get(PTplayCtrler.get(0)).pause();
+        audio.get(PTplayCtrler.get(0)).stop();
 
         try {
             AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/" + PTplayTrack.get(0) + ".mp3");
@@ -397,15 +396,18 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             audio.get(PTfadeinCtrler.get(0)).seekTo(PTresume.get(PTfadeinCtrler.get(0)) * 1000);
         }
 
-        FadeOut(1, 0.8, audio.get((PTfadeinCtrler.get(0))));
+        FadeOut(1, 0.8, audio.get((PTfadeinCtrler.get(0))), new Runnable() {
+            @Override
+            public void run() {
+                PTDidPlay();
+            }
+        });
 
         PTfinalTrack.add(PTfadeinTrack.get(0));
         PTfinalTask += 1;
         PTfadeinCtrler.remove(0);
         PTfadeinTrack.remove(0);
         PTfadeinTask -= 1;
-
-        PTDidPlay();
     }
 
     private void PTDidPlay() {
@@ -421,19 +423,31 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             volume = ((double) Integer.valueOf(mid(str, loc + 4, 3))) / 100;
             BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
             if (!newBGTRACK.equals(cBGTRACK)) {
-                FadeOut(0.2, 0.8, audio.get(cBGplayer));
-                BGplayNew();
+                FadeOut(0.2, 0.8, audio.get(cBGplayer), new Runnable() {
+                    @Override
+                    public void run() {
+                        BGplayNew();
+                    }
+                });
             } else {
-                FadeOut(volume, 0.8, audio.get(cBGplayer));
-                BGDidFade();
+                FadeOut(volume, 0.8, audio.get(cBGplayer), new Runnable() {
+                    @Override
+                    public void run() {
+                        BGDidFade();
+                    }
+                });
             }
         }
     }
 
     private void BGplayNew() {
-        FadeOut(0, 1, audio.get(cBGplayer));
-        BGstop();
-        audio.get(newBGplayer).pause();
+        FadeOut(0, 1, audio.get(cBGplayer), new Runnable() {
+            @Override
+            public void run() {
+                BGstop();
+            }
+        });
+        audio.get(newBGplayer).stop();
 
         try {
             AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/abg" + newBGTRACK + ".mp3");
@@ -452,7 +466,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     }
 
     private void BGstop() {
-        audio.get(cBGplayer).pause();
+        audio.get(cBGplayer).stop();
         if (cBGplayer == 11) {
             cBGplayer = 10;
             newBGplayer = 11;
@@ -467,8 +481,12 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         if (BGresume.get(newBGTRACK) > 2) {
             audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK) * 1000);
         }
-        FadeOut(volume, 0.8, audio.get(newBGplayer));
-        BGDidPlay();
+        FadeOut(volume, 0.8, audio.get(newBGplayer), new Runnable() {
+            @Override
+            public void run() {
+                BGDidPlay();
+            }
+        });
     }
 
     private void BGDidPlay() {
@@ -476,9 +494,18 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
     private void PTctrlS() {
         if (ctrl.contains("S")) {
-            BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
-            FadeOut(0, 5, audio.get(cBGplayer));
-            BGDidStop();
+            if (audio.get(cBGplayer).isPlaying()) {
+                BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
+            } else {
+                BGresume.put(cBGTRACK, 0);
+            }
+
+            FadeOut(0, 5, audio.get(cBGplayer), new Runnable() {
+                @Override
+                public void run() {
+                    BGDidStop();
+                }
+            });
         }
     }
 
@@ -493,8 +520,13 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             if (volume > 1) {
                 volume = 1.0;
             }
-            FadeOut(volume, 1, audio.get(cBGplayer));
-            BGDidFade();
+            FadeOut(volume, 1, audio.get(cBGplayer), new Runnable() {
+                @Override
+                public void run() {
+                    BGDidFade();
+                }
+            });
+
         }
     }
 
@@ -528,5 +560,29 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         return buf;
     }
 
+    public static void FadeOut(final double volume, final double duration, final MediaPlayer audio, final Runnable task) {
+        final Handler h = new Handler();
+        h.postDelayed(new Runnable() {
+            private double time = duration;
+            private float newVolume = 0.0f;
 
+            @Override
+            public void run() {
+                if (!audio.isPlaying())
+                    audio.start();
+                // can call h again after work!
+                time -= 100;
+                newVolume = (float) ((volume * time) / duration);
+                audio.setVolume(newVolume, newVolume);
+                if (time > 0)
+                    h.postDelayed(this, 100);
+                else {
+                    audio.stop();
+                    audio.release();
+                    task.run();
+                }
+            }
+        }, 100);
+
+    }
 }
