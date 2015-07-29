@@ -26,8 +26,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
@@ -157,7 +155,14 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         total.put(9, 0);
 
         for (int i = 0; i < 12; i++) {
-            audio.add(new MediaPlayer());
+            MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    mediaPlayer.start();
+                }
+            });
+            audio.add(mediaPlayer);
         }
     }
 
@@ -167,11 +172,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         setContentView(R.layout.player_activity);
         context = this;
         beaconManager = BeaconManager.getInstanceForApplication(this);
-
-        // To detect proprietary beacons, you must add a line like below corresponding to your beacon
-        // type.  Do a web search for "setBeaconLayout" to get the proper expression.
-        // beaconManager.getBeaconParsers().add(new BeaconParser().
-        //        setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -287,14 +287,14 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
         });
 
-//        try {
-//            AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/a1.mp3");
-//            audio.get(0).setDataSource(raw.getFileDescriptor());
-//            audio.get(0).prepare();
+        try {
+            AssetFileDescriptor raw = getAssets().openFd("raw/initial.mp3");
+            audio.get(0).setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
+            audio.get(0).prepareAsync();
 //            audio.get(0).start();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         try {
             beaconManager.startRangingBeaconsInRegion(new Region("hebron", IDENTIFIER_UUID, null, null));
         } catch (RemoteException e) {
@@ -335,7 +335,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTfadeoutCtrler.add(pPOS);
         PTfadeoutTask += 1;
 
-        FadeOut(0.2, 0.8, audio.get(pPOS), new Runnable() {
+        FadeOut(0.2, 800, audio.get(pPOS), new Runnable() {
             @Override
             public void run() {
                 PTplayNew();
@@ -348,7 +348,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     }
 
     private void PTplayNew() {
-        FadeOut(0, 1, audio.get(PTfadeoutCtrler.get(0)), new Runnable() {
+        FadeOut(0, 1000, audio.get(PTfadeoutCtrler.get(0)), new Runnable() {
             @Override
             public void run() {
                 PTstop();
@@ -360,14 +360,15 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTfadeoutCtrler.remove(0);
         PTfadeoutTask -= 1;
 
-
-        audio.get(PTplayCtrler.get(0)).stop();
+        if (audio.get(PTplayCtrler.get(0)).isPlaying()) {
+            audio.get(PTplayCtrler.get(0)).pause();
+        }
 
         try {
             AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/" + PTplayTrack.get(0) + ".mp3");
-            audio.get(PTplayCtrler.get(0)).setDataSource(raw.getFileDescriptor());
-            audio.get(PTplayCtrler.get(0)).prepare();
-            audio.get(PTplayCtrler.get(0)).start();
+            audio.get(PTplayCtrler.get(0)).setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
+            audio.get(PTplayCtrler.get(0)).prepareAsync();
+//            audio.get(PTplayCtrler.get(0)).start();
             audio.get(PTplayCtrler.get(0)).setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -393,10 +394,12 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
     private void PTfadein() {
         if (PTresume.get(PTfadeinCtrler.get(0)) > 2) {
-            audio.get(PTfadeinCtrler.get(0)).seekTo(PTresume.get(PTfadeinCtrler.get(0)) * 1000);
+            if (audio.get(PTfadeinCtrler.get(0)).isPlaying()) {
+                audio.get(PTfadeinCtrler.get(0)).seekTo(PTresume.get(PTfadeinCtrler.get(0)) * 1000);
+            }
         }
 
-        FadeOut(1, 0.8, audio.get((PTfadeinCtrler.get(0))), new Runnable() {
+        FadeOut(1, 800, audio.get((PTfadeinCtrler.get(0))), new Runnable() {
             @Override
             public void run() {
                 PTDidPlay();
@@ -421,16 +424,20 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             int loc = str.indexOf("P");
             newBGTRACK = mid(str, loc + 2, 2);
             volume = ((double) Integer.valueOf(mid(str, loc + 4, 3))) / 100;
-            BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
+            if (audio.get(cBGplayer).isPlaying()) {
+                BGresume.put(cBGTRACK, audio.get(cBGplayer).getCurrentPosition() / 1000 - 2);
+            } else {
+                BGresume.put(cBGTRACK, 0);
+            }
             if (!newBGTRACK.equals(cBGTRACK)) {
-                FadeOut(0.2, 0.8, audio.get(cBGplayer), new Runnable() {
+                FadeOut(0.2, 800, audio.get(cBGplayer), new Runnable() {
                     @Override
                     public void run() {
                         BGplayNew();
                     }
                 });
             } else {
-                FadeOut(volume, 0.8, audio.get(cBGplayer), new Runnable() {
+                FadeOut(volume, 800, audio.get(cBGplayer), new Runnable() {
                     @Override
                     public void run() {
                         BGDidFade();
@@ -441,19 +448,21 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     }
 
     private void BGplayNew() {
-        FadeOut(0, 1, audio.get(cBGplayer), new Runnable() {
+        FadeOut(0, 1000, audio.get(cBGplayer), new Runnable() {
             @Override
             public void run() {
                 BGstop();
             }
         });
-        audio.get(newBGplayer).stop();
+        if (audio.get(newBGplayer).isPlaying()) {
+            audio.get(newBGplayer).pause();
+        }
 
         try {
             AssetFileDescriptor raw = getApplicationContext().getAssets().openFd("raw/abg" + newBGTRACK + ".mp3");
-            audio.get(newBGplayer).setDataSource(raw.getFileDescriptor());
-            audio.get(newBGplayer).prepare();
-            audio.get(newBGplayer).start();
+            audio.get(newBGplayer).setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
+            audio.get(newBGplayer).prepareAsync();
+//            audio.get(newBGplayer).start();
             audio.get(newBGplayer).setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -466,7 +475,9 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     }
 
     private void BGstop() {
-        audio.get(cBGplayer).stop();
+        if (audio.get(cBGplayer).isPlaying()) {
+            audio.get(cBGplayer).pause();
+        }
         if (cBGplayer == 11) {
             cBGplayer = 10;
             newBGplayer = 11;
@@ -479,9 +490,11 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
     private void BGfadein() {
         if (BGresume.get(newBGTRACK) > 2) {
-            audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK) * 1000);
+            if (audio.get(newBGplayer).isPlaying()) {
+                audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK) * 1000);
+            }
         }
-        FadeOut(volume, 0.8, audio.get(newBGplayer), new Runnable() {
+        FadeOut(volume, 800, audio.get(newBGplayer), new Runnable() {
             @Override
             public void run() {
                 BGDidPlay();
@@ -500,7 +513,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 BGresume.put(cBGTRACK, 0);
             }
 
-            FadeOut(0, 5, audio.get(cBGplayer), new Runnable() {
+            FadeOut(0, 5000, audio.get(cBGplayer), new Runnable() {
                 @Override
                 public void run() {
                     BGDidStop();
@@ -520,7 +533,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             if (volume > 1) {
                 volume = 1.0;
             }
-            FadeOut(volume, 1, audio.get(cBGplayer), new Runnable() {
+            FadeOut(volume, 1000, audio.get(cBGplayer), new Runnable() {
                 @Override
                 public void run() {
                     BGDidFade();
@@ -568,8 +581,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
             @Override
             public void run() {
-                if (!audio.isPlaying())
-                    audio.start();
+//                if (!audio.isPlaying())
+//                    audio.start();
                 // can call h again after work!
                 time -= 100;
                 newVolume = (float) ((volume * time) / duration);
@@ -577,8 +590,9 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 if (time > 0)
                     h.postDelayed(this, 100);
                 else {
-                    audio.stop();
-                    audio.release();
+                    if (audio.isPlaying()) {
+                        audio.pause();
+                    }
                     task.run();
                 }
             }
