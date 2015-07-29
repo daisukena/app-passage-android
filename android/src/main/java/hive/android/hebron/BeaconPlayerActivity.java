@@ -245,9 +245,21 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             fadeOut(0, 1800, mediaPlayer, new Runnable() {
                 @Override
                 public void run() {
-                    BGstop();
+                    if (audio.get(cBGplayer).isPlaying()) {
+                        audio.get(cBGplayer).stop();
+                    }
+//                    if (cBGplayer == 11) {
+//                        cBGplayer = 10;
+//                        newBGplayer = 11;
+//                    } else {
+//                        cBGplayer = 11;
+//                        newBGplayer = 10;
+//                    }
+                    cBGTRACK = newBGTRACK;
+
                     try {
-                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
+//                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
+                        MediaPlayer mediaPlayer = audio.get(cBGplayer);
                         playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mediaPlayer) {
@@ -262,20 +274,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         } else {
             fadeOut(volume, 800, mediaPlayer, null);
         }
-    }
-
-    private void BGstop() {
-        if (audio.get(cBGplayer).isPlaying()) {
-            audio.get(cBGplayer).stop();
-        }
-        if (cBGplayer == 11) {
-            cBGplayer = 10;
-            newBGplayer = 11;
-        } else {
-            cBGplayer = 11;
-            newBGplayer = 10;
-        }
-        cBGTRACK = newBGTRACK;
     }
 
     private void caseCtrlContainsS() {
@@ -302,21 +300,22 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-    public void fadeOut(final float givenVolume, final float duration, final MediaPlayer audio, final Runnable task) {
+    public void fadeOut(final float targetVolume, final float duration, final MediaPlayer audio, final Runnable task) {
         final Handler h = new Handler(Looper.getMainLooper());
         h.postDelayed(new Runnable() {
-            private double time = duration;
-            private float newVolume = 0.0f;
+            private float time = duration;
+            private float newVolume = volume;
+            private float delta = (volume - targetVolume) / (time / 100);
 
             @Override
             public void run() {
                 if (audio.isPlaying()) {
                     time -= 100;
-                    newVolume = (float) ((givenVolume * time) / duration);
+                    newVolume -= delta;
                     audio.setVolume(newVolume, newVolume);
                     if (time > 0) h.postDelayed(this, 100);
                     else {
-//                        if (givenVolume == 0 && audio.isPlaying()) audio.pause();
+//                        if (targetVolume == 0 && audio.isPlaying()) audio.pause();
                         if (task != null) task.run();
                     }
                 } else {
@@ -329,8 +328,9 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     private void playMedia(MediaPlayer mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
-            mediaPlayer.reset();
         }
+        mediaPlayer.reset();
+
         AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
         mediaPlayer.setOnCompletionListener(completionListener);
         mediaPlayer.setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
