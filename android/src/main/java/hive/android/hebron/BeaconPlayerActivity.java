@@ -8,6 +8,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -141,9 +142,10 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                     } else {
                         ctrlrsv = 0;
                     }
-                    PTctrlP();
-                    PTctrlS();
-                    PTctrlV();
+
+                    caseCtrlContainsP();
+                    caseCtrlContainsS();
+                    caseCtrlContainsV();
 
                     if (ctrl.contains("E")) {
                         pPOS = cPOS;
@@ -151,8 +153,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                         return;
                     }
 
-                    PTctrlN();
-                    PTplay();
+                    caseCtrlContainsN();
+                    play(pPOS, newPOS, newTRACK);
                     cPOS = newPOS;
                     pPOS = cPOS;
                 }
@@ -195,7 +197,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         else ctrl = ctrlData.get(newTRACK);
     }
 
-    private void PTctrlN() {
+    private void caseCtrlContainsN() {
         if (ctrl.contains("N")) {
             ++SCENE;
             initializeResume();
@@ -203,104 +205,68 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-    private void PTplay() {
-        if (audio.get(pPOS).isPlaying()) PTresume.put(pPOS, audio.get(pPOS).getCurrentPosition() - 2000);
-        else PTresume.put(pPOS, 0);
+    private void play(Integer previousPosititon, final Integer nextPosition, final String nextTrack) {
+        if (audio.get(previousPosititon).isPlaying())
+            PTresume.put(previousPosititon, audio.get(previousPosititon).getCurrentPosition() - 2000);
+        else PTresume.put(previousPosititon, 0);
 
-        fadeOut((float) 0.2, 800, audio.get(pPOS), new Runnable() {
+        Runnable createCallback = new Runnable() {
             @Override
             public void run() {
-                PTplayNew(newPOS, newTRACK);
-            }
-        });
-
-    }
-
-    private void PTplayNew(final Integer pos, String track) {
-        try {
-            MediaPlayer mediaPlayer = audio.get(pos);
-            playMedia(mediaPlayer, "raw/" + track + ".mp3", new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mediaPlayer) {
-//                    PTfadein(pos);
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-//    private void PTfadein(Integer pos) {
-//        if (PTresume.get(pos) > 2) {
-//            MediaPlayer mediaPlayer = audio.get(pos);
-//            if (mediaPlayer.isPlaying()) {
-//                mediaPlayer.seekTo(PTresume.get(pos));
-//            }
-//        }
-//        fadeOut(1, 800, audio.get((pos)), null);
-//    }
-
-
-    private void PTctrlP() {
-        if (ctrl.contains("P")) {
-            int loc = ctrl.indexOf("P");
-            newBGTRACK = mid(ctrl, loc + 2, 2);
-            volume = ((float) Integer.valueOf(mid(ctrl, loc + 4, 3))) / 100;
-
-            MediaPlayer mediaPlayer = audio.get(cBGplayer);
-
-            if (mediaPlayer.isPlaying())
-                BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
-            else BGresume.put(cBGTRACK, 0);
-
-            if (!newBGTRACK.equals(cBGTRACK)) {
-                fadeOut((float) 0.2, 800, mediaPlayer, new Runnable() {
-                    @Override
-                    public void run() {
-                        BGplayNew();
-                    }
-                });
-            } else {
-                fadeOut(volume, 800, mediaPlayer, null);
-            }
-        }
-    }
-
-    private void BGplayNew() {
-        fadeOut(0, 1000, audio.get(cBGplayer), new Runnable() {
-            @Override
-            public void run() {
-                BGstop();
-
                 try {
-                    MediaPlayer mediaPlayer = audio.get(newBGplayer);
-                    playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
+                    MediaPlayer mediaPlayer = audio.get(nextPosition);
+                    playMedia(mediaPlayer, "raw/" + nextTrack + ".mp3", new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mediaPlayer) {
-//                            BGfadein();
+//                            PTfadein(nextPosition);
                         }
                     });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-        });
+        };
+        fadeOut((float) 0.2, 800, audio.get(previousPosititon), createCallback);
     }
 
-    private void playMedia(MediaPlayer mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.stop();
-            mediaPlayer.reset();
+    private void caseCtrlContainsP() {
+        if (!ctrl.contains("P")) return;
+
+        int loc = ctrl.indexOf("P");
+        newBGTRACK = mid(ctrl, loc + 2, 2);
+        volume = ((float) Integer.valueOf(mid(ctrl, loc + 4, 3))) / 100;
+
+        MediaPlayer mediaPlayer = audio.get(cBGplayer);
+
+        if (mediaPlayer.isPlaying()) BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
+        else BGresume.put(cBGTRACK, 0);
+
+        if (!newBGTRACK.equals(cBGTRACK)) {
+            fadeOut(0, 1800, mediaPlayer, new Runnable() {
+                @Override
+                public void run() {
+                    BGstop();
+                    try {
+                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
+                        playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mediaPlayer) {
+//                                BGfadein();
+                            }
+                        });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } else {
+            fadeOut(volume, 800, mediaPlayer, null);
         }
-        AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
-        mediaPlayer.setOnCompletionListener(completionListener);
-        mediaPlayer.setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
-        mediaPlayer.prepareAsync();
     }
 
     private void BGstop() {
         if (audio.get(cBGplayer).isPlaying()) {
-            audio.get(cBGplayer).pause();
+            audio.get(cBGplayer).stop();
         }
         if (cBGplayer == 11) {
             cBGplayer = 10;
@@ -312,18 +278,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         cBGTRACK = newBGTRACK;
     }
 
-//    private void BGfadein() {
-//        MediaPlayer mediaPlayer = audio.get(newBGplayer);
-//        if (BGresume.get(newBGTRACK) > 2) {
-//            if (mediaPlayer.isPlaying()) {
-//                audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK));
-//            }
-//        }
-//        fadeOut(volume, 800, mediaPlayer, null);
-//    }
-
-
-    private void PTctrlS() {
+    private void caseCtrlContainsS() {
         if (ctrl.contains("S")) {
             MediaPlayer mediaPlayer = audio.get(cBGplayer);
             if (mediaPlayer.isPlaying()) {
@@ -336,8 +291,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-
-    private void PTctrlV() {
+    private void caseCtrlContainsV() {
         if (ctrl.contains("V")) {
             int loc = ctrl.indexOf("V");
             volume = Float.valueOf(mid(ctrl, loc + 2, 3)) / 100;
@@ -348,33 +302,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-    private String mid(String str, int start, int length) {
-        int len = str.length();
-        String buf = "";
-        int i = 0;
-        int j = 0;
-        if (start > len) {
-            buf = "";
-        } else {
-            if (length <= 0) {
-                buf = "";
-            } else {
-                for (Character character : str.toCharArray()) {
-                    i++;
-                    if (i >= start) {
-                        if (j < length) {
-                            buf = buf + character;
-                            j++;
-                        }
-                    }
-                }
-            }
-        }
-        return buf;
-    }
-
     public void fadeOut(final float givenVolume, final float duration, final MediaPlayer audio, final Runnable task) {
-        final Handler h = new Handler();
+        final Handler h = new Handler(Looper.getMainLooper());
         h.postDelayed(new Runnable() {
             private double time = duration;
             private float newVolume = 0.0f;
@@ -395,6 +324,17 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 }
             }
         }, 100);
+    }
+
+    private void playMedia(MediaPlayer mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+            mediaPlayer.reset();
+        }
+        AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
+        mediaPlayer.setOnCompletionListener(completionListener);
+        mediaPlayer.setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
+        mediaPlayer.prepareAsync();
     }
 
     private void createSystemInitialState() {
@@ -504,5 +444,50 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTresume.put(9, 0);
         PTresume.put(10, 0);
         PTresume.put(11, 0);
+    }
+
+    private String mid(String str, int start, int length) {
+        int len = str.length();
+        String buf = "";
+        int i = 0;
+        int j = 0;
+        if (start > len) {
+            buf = "";
+        } else {
+            if (length <= 0) {
+                buf = "";
+            } else {
+                for (Character character : str.toCharArray()) {
+                    i++;
+                    if (i >= start) {
+                        if (j < length) {
+                            buf = buf + character;
+                            j++;
+                        }
+                    }
+                }
+            }
+        }
+        return buf;
+    }
+
+    private void PTfadein(Integer pos) {
+        if (PTresume.get(pos) > 2) {
+            MediaPlayer mediaPlayer = audio.get(pos);
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.seekTo(PTresume.get(pos));
+            }
+        }
+        fadeOut(1, 800, audio.get((pos)), null);
+    }
+
+    private void BGfadein() {
+        MediaPlayer mediaPlayer = audio.get(newBGplayer);
+        if (BGresume.get(newBGTRACK) > 2) {
+            if (mediaPlayer.isPlaying()) {
+                audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK));
+            }
+        }
+        fadeOut(volume, 800, mediaPlayer, null);
     }
 }
