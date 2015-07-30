@@ -18,6 +18,7 @@ import android.widget.Toast;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
@@ -76,6 +77,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         setContentView(R.layout.player_activity);
         context = this;
         beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -227,6 +229,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
         };
         fadeOut((float) 0.2, 800, audio.get(previousPosititon), createCallback);
+        fadeOut((float) 1, 800, audio.get(previousPosititon), createCallback);
     }
 
     private void caseCtrlContainsP() {
