@@ -37,4 +37,5 @@ dependencies {
     compile 'org.altbeacon:android-beacon-library:2+'
     compile 'com.android.support:appcompat-v7:18.+'
 
+    androidTestCompile "com.jayway.android.robotium:robotium-solo:5.4.1"
 }
