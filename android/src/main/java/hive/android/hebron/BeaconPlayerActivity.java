@@ -354,15 +354,15 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         audio = new ArrayList<MediaPlayer>();
 
         beaconID = new HashMap<String, Integer>();
-        beaconID.put("1340038689", 1);
-        beaconID.put("1340030102", 2);
-        beaconID.put("1340030103", 3);
-        beaconID.put("1340030104", 4);
-        beaconID.put("1340030105", 5);
-        beaconID.put("1340030106", 6);
-        beaconID.put("1340030107", 7);
-        beaconID.put("1340030108", 8);
-        beaconID.put("1340010769", 9);
+        beaconID.put("1340030201", 1);
+        beaconID.put("1340030202", 2);
+        beaconID.put("1340030203", 3);
+        beaconID.put("1340030204", 4);
+        beaconID.put("1340030205", 5);
+        beaconID.put("1340030206", 6);
+        beaconID.put("1340030207", 7);
+        beaconID.put("1340030208", 8);
+        beaconID.put("1340030209", 9);
 
         ctrlData = new HashMap<String, String>();
         ctrlData.put("0001", "S");
