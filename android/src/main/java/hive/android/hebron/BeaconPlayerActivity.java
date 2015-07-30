@@ -229,7 +229,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
         };
         fadeOut((float) 0.2, 800, audio.get(previousPosititon), createCallback);
-        fadeOut((float) 1, 800, audio.get(previousPosititon), createCallback);
     }
 
     private void caseCtrlContainsP() {
