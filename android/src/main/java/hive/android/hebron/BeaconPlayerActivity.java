@@ -123,7 +123,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 }
                 Beacon beacon = null;
                 for (Beacon current : beacons) {
-                    if (current.getDistance() != -1.0D && beaconID.get(current.getId2().toString() + current.getId3()) != null) {
+                    if (current.getDistance() != -1.0D && beaconID.get(current.getId2().toString() + current.getId3()) != null
+                            && current.getRssi() > 0) {
                         beacon = current;
                         break;
                     }
