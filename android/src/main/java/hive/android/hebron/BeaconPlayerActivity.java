@@ -27,9 +27,13 @@ import org.altbeacon.beacon.Region;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
@@ -121,11 +125,16 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 if (beacons.size() == 0) {
                     return;
                 }
+
                 Beacon beacon = null;
+                double distance = 0;
+
                 for (Beacon current : beacons) {
                     if (current.getDistance() != -1.0D && beaconID.get(current.getId2().toString() + current.getId3()) != null) {
-                        beacon = current;
-                        break;
+                        if (distance == 0 || current.getDistance() < distance) {
+                            beacon = current;
+                            distance = current.getDistance();
+                        }
                     }
                 }
                 if (beacon == null) {
