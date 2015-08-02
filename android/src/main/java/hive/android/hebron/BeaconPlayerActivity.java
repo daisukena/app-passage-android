@@ -27,13 +27,9 @@ import org.altbeacon.beacon.Region;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.UUID;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
@@ -58,7 +54,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
     private String newTRACK;
 
-    private float volume;
+    private volatile float volume;
 
     private String newBGTRACK;
     private String cBGTRACK;
@@ -216,7 +212,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
     }
 
-    private void play(Integer previousPosititon, final Integer nextPosition, final String nextTrack) {
+    private void play(final Integer previousPosititon, final Integer nextPosition, final String nextTrack) {
         if (audio.get(previousPosititon).isPlaying())
             PTresume.put(previousPosititon, audio.get(previousPosititon).getCurrentPosition() - 2000);
         else PTresume.put(previousPosititon, 0);
@@ -224,12 +220,13 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         Runnable createCallback = new Runnable() {
             @Override
             public void run() {
+                fadeOut((float) 0, 1000, audio.get(previousPosititon), null);
                 try {
                     MediaPlayer mediaPlayer = audio.get(nextPosition);
                     playMedia(mediaPlayer, "raw/" + nextTrack + ".mp3", new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mediaPlayer) {
-//                            PTfadein(nextPosition);
+                            PTfadein(nextPosition);
                         }
                     });
                 } catch (IOException e) {
@@ -247,34 +244,38 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         newBGTRACK = mid(ctrl, loc + 2, 2);
         volume = ((float) Integer.valueOf(mid(ctrl, loc + 4, 3))) / 100;
 
-        MediaPlayer mediaPlayer = audio.get(cBGplayer);
+        final MediaPlayer mediaPlayer = audio.get(cBGplayer);
 
         if (mediaPlayer.isPlaying()) BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
         else BGresume.put(cBGTRACK, 0);
 
         if (!newBGTRACK.equals(cBGTRACK)) {
-            fadeOut(0, 1800, mediaPlayer, new Runnable() {
+            fadeOut((float) 0.2, 800, mediaPlayer, new Runnable() {
                 @Override
                 public void run() {
-                    if (audio.get(cBGplayer).isPlaying()) {
-                        audio.get(cBGplayer).stop();
-                    }
-//                    if (cBGplayer == 11) {
-//                        cBGplayer = 10;
-//                        newBGplayer = 11;
-//                    } else {
-//                        cBGplayer = 11;
-//                        newBGplayer = 10;
-//                    }
-                    cBGTRACK = newBGTRACK;
-
+                    fadeOut((float) 0, 1000, mediaPlayer, new Runnable() {
+                        @Override
+                        public void run() {
+                            if (audio.get(cBGplayer).isPlaying()) {
+                                audio.get(cBGplayer).stop();
+                            }
+                            if (cBGplayer == 11) {
+                                cBGplayer = 10;
+                                newBGplayer = 11;
+                            } else {
+                                cBGplayer = 11;
+                                newBGplayer = 10;
+                            }
+                            cBGTRACK = newBGTRACK;
+                        }
+                    });
+                    if (audio.get(newBGplayer).isPlaying()) audio.get(newBGplayer).stop();
                     try {
-//                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
-                        MediaPlayer mediaPlayer = audio.get(cBGplayer);
+                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
                         playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mediaPlayer) {
-//                                BGfadein();
+                                BGfadein();
                             }
                         });
                     } catch (IOException e) {

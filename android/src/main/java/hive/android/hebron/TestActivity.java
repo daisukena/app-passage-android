@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TestActivity extends Activity {
-    protected final String TAG = "BeaconPlayerActivity";
+    protected final String TAG = "TestActivity";
     Context context;
     private Map<String, Integer> beaconID;
     private Map<String, String> ctrlData;
