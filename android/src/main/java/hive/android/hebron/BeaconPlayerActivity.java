@@ -327,7 +327,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                     audio.setVolume(newVolume, newVolume);
                     if (time > 0) h.postDelayed(this, 100);
                     else {
-//                        if (targetVolume == 0 && audio.isPlaying()) audio.pause();
+                        if (targetVolume == 0 && audio.isPlaying()) audio.pause();
                         if (task != null) task.run();
                     }
                 } else {
@@ -342,11 +342,10 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             mediaPlayer.stop();
         }
         mediaPlayer.reset();
-
         AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
         mediaPlayer.setOnCompletionListener(completionListener);
         mediaPlayer.setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
-        mediaPlayer.prepareAsync();
+        mediaPlayer.prepare();
     }
 
     private void createSystemInitialState() {
@@ -430,6 +429,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
                     mediaPlayer.start();
+                    mediaPlayer.setVolume(1, 1);
                 }
             });
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {

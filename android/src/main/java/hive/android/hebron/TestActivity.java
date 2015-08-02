@@ -36,7 +36,7 @@ public class TestActivity extends Activity {
 
     private String newTRACK;
 
-    private float volume;
+    private volatile float volume;
 
     private String newBGTRACK;
     private String cBGTRACK;
@@ -67,10 +67,10 @@ public class TestActivity extends Activity {
             @Override
             public void run() {
                 newPOS = iterator.next();
-                h2.postDelayed(this, 5000);
+                h2.postDelayed(this, 2000);
 
             }
-        }, 5000);
+        }, 2000);
 
         final Handler h1 = new Handler(Looper.getMainLooper());
         h1.postDelayed(new Runnable() {
@@ -126,7 +126,7 @@ public class TestActivity extends Activity {
         }
     }
 
-    private void play(Integer previousPosititon, final Integer nextPosition, final String nextTrack) {
+    private void play(final Integer previousPosititon, final Integer nextPosition, final String nextTrack) {
         if (audio.get(previousPosititon).isPlaying())
             PTresume.put(previousPosititon, audio.get(previousPosititon).getCurrentPosition() - 2000);
         else PTresume.put(previousPosititon, 0);
@@ -134,14 +134,15 @@ public class TestActivity extends Activity {
         Runnable createCallback = new Runnable() {
             @Override
             public void run() {
+                fadeOut((float) 0, 1000, audio.get(previousPosititon), null);
                 try {
                     MediaPlayer mediaPlayer = audio.get(nextPosition);
                     playMedia(mediaPlayer, "raw/" + nextTrack + ".mp3", new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mediaPlayer) {
-//                            PTfadein(nextPosition);
+                            PTfadein(nextPosition);
                         }
-                    }, false);
+                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -157,37 +158,40 @@ public class TestActivity extends Activity {
         newBGTRACK = mid(ctrl, loc + 2, 2);
         volume = ((float) Integer.valueOf(mid(ctrl, loc + 4, 3))) / 100;
 
-        MediaPlayer mediaPlayer = audio.get(cBGplayer);
+        final MediaPlayer mediaPlayer = audio.get(cBGplayer);
 
-        if (mediaPlayer.isPlaying())
-            BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
+        if (mediaPlayer.isPlaying()) BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
         else BGresume.put(cBGTRACK, 0);
 
         if (!newBGTRACK.equals(cBGTRACK)) {
-            fadeOut(0, 1800, mediaPlayer, new Runnable() {
+            fadeOut((float) 0.2, 800, mediaPlayer, new Runnable() {
                 @Override
                 public void run() {
-                    if (audio.get(cBGplayer).isPlaying()) {
-                        audio.get(cBGplayer).stop();
-                    }
-//                    if (cBGplayer == 11) {
-//                        cBGplayer = 10;
-//                        newBGplayer = 11;
-//                    } else {
-//                        cBGplayer = 11;
-//                        newBGplayer = 10;
-//                    }
-                    cBGTRACK = newBGTRACK;
-
+                    fadeOut((float) 0, 1000, mediaPlayer, new Runnable() {
+                        @Override
+                        public void run() {
+                            if (audio.get(cBGplayer).isPlaying()) {
+                                audio.get(cBGplayer).stop();
+                            }
+                            if (cBGplayer == 11) {
+                                cBGplayer = 10;
+                                newBGplayer = 11;
+                            } else {
+                                cBGplayer = 11;
+                                newBGplayer = 10;
+                            }
+                            cBGTRACK = newBGTRACK;
+                        }
+                    });
+                    if (audio.get(newBGplayer).isPlaying()) audio.get(newBGplayer).stop();
                     try {
-//                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
-                        MediaPlayer mediaPlayer = audio.get(cBGplayer);
+                        MediaPlayer mediaPlayer = audio.get(newBGplayer);
                         playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mediaPlayer) {
-//                                BGfadein();
+                                BGfadein();
                             }
-                        }, true);
+                        });
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -237,7 +241,7 @@ public class TestActivity extends Activity {
                     audio.setVolume(newVolume, newVolume);
                     if (time > 0) h.postDelayed(this, 100);
                     else {
-                        if (targetVolume == 0) audio.pause();
+                        if (targetVolume == 0 && audio.isPlaying()) audio.pause();
                         if (task != null) task.run();
                     }
                 } else {
@@ -247,7 +251,7 @@ public class TestActivity extends Activity {
         }, 100);
     }
 
-    private void playMedia(MediaPlayer mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener, boolean isBg) throws IOException {
+    private void playMedia(MediaPlayer mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
         }
@@ -335,10 +339,12 @@ public class TestActivity extends Activity {
 
         for (int i = 0; i < 12; i++) {
             MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
                     mediaPlayer.start();
+                    mediaPlayer.setVolume(1, 1);
                 }
             });
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -409,6 +415,6 @@ public class TestActivity extends Activity {
                 audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK));
             }
         }
-        fadeOut(1, 800, mediaPlayer, null);
+        fadeOut(volume, 800, mediaPlayer, null);
     }
 }
