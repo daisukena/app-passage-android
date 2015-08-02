@@ -188,8 +188,16 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
         try {
             AssetFileDescriptor raw = getAssets().openFd("raw/initial.mp3");
+            audio.get(0).setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    mediaPlayer.start();
+                    mediaPlayer.setVolume(1, 1);
+                }
+            });
             audio.get(0).setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
             audio.get(0).prepare();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -224,7 +232,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                 fadeOut((float) 0, 1000, audio.get(previousPosititon), null);
                 try {
                     MediaPlayerWrapper mediaPlayer = audio.get(nextPosition);
-                    playMedia(mediaPlayer, "raw/" + nextTrack + ".mp3", new MediaPlayer.OnCompletionListener() {
+                    playMedia(1, mediaPlayer, "raw/" + nextTrack + ".mp3", new MediaPlayer.OnCompletionListener() {
                         @Override
                         public void onCompletion(MediaPlayer mediaPlayer) {
                             PTfadein(nextPosition);
@@ -273,7 +281,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                     if (audio.get(newBGplayer).isPlaying()) audio.get(newBGplayer).stop();
                     try {
                         MediaPlayerWrapper mediaPlayer = audio.get(newBGplayer);
-                        playMedia(mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
+                        playMedia(volume, mediaPlayer, "raw/bg" + newBGTRACK + ".mp3", new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mediaPlayer) {
                                 BGfadein();
@@ -338,13 +346,20 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }, 100);
     }
 
-    private void playMedia(MediaPlayerWrapper mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
+    private void playMedia(final float volume, MediaPlayerWrapper mediaPlayer, String media, MediaPlayer.OnCompletionListener completionListener) throws IOException {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
         }
         mediaPlayer.reset();
         AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
         mediaPlayer.setOnCompletionListener(completionListener);
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaPlayer.start();
+                mediaPlayer.setVolume(volume, volume);
+            }
+        });
         mediaPlayer.setDataSource(raw.getFileDescriptor(), raw.getStartOffset(), raw.getLength());
         mediaPlayer.prepare();
     }
@@ -426,13 +441,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         for (int i = 0; i < 12; i++) {
             MediaPlayerWrapper mediaPlayer = new MediaPlayerWrapper(new MediaPlayer());
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    mediaPlayer.start();
-                    mediaPlayer.setVolume(1, 1);
-                }
-            });
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 @Override
                 public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
