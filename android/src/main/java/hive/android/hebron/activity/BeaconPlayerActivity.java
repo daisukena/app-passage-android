@@ -271,12 +271,12 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                             if (audio.get(cBGplayer).isPlaying()) {
                                 audio.get(cBGplayer).stop();
                             }
-                            if (cBGplayer == 11) {
-                                cBGplayer = 10;
-                                newBGplayer = 11;
+                            if (cBGplayer == 27) {
+                                cBGplayer = 26;
+                                newBGplayer = 27;
                             } else {
-                                cBGplayer = 11;
-                                newBGplayer = 10;
+                                cBGplayer = 27;
+                                newBGplayer = 26;
                             }
                             cBGTRACK = newBGTRACK;
                         }
