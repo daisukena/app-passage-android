@@ -18,6 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import hive.android.hebron.utils.MediaPlayerWrapper;
+
 public class TestActivity extends Activity {
     protected final String TAG = "TestActivity";
     Context context;

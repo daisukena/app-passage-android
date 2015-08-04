@@ -1,4 +1,4 @@
-package hive.android.hebron;
+package hive.android.hebron.utils;
 
 import android.media.MediaPlayer;
 

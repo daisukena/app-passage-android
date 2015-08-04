@@ -1,4 +1,4 @@
-package hive.android.hebron;
+package hive.android.hebron.activity;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -31,6 +31,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import hive.android.hebron.R;
+import hive.android.hebron.utils.MediaPlayerWrapper;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     public final UUID REGION_UUID = UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
