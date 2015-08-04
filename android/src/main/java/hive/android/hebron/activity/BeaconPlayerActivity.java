@@ -2,7 +2,6 @@ package hive.android.hebron.activity;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -13,6 +12,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
@@ -39,7 +39,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     public final UUID REGION_UUID = UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
     public final Identifier IDENTIFIER_UUID = Identifier.fromUuid(REGION_UUID);
     protected final String TAG = "BeaconPlayerActivity";
-    Context context;
     private BeaconManager beaconManager;
     private boolean hasBounded = false;
     private Map<String, Integer> beaconID;
@@ -78,7 +77,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.player_activity);
-        context = this;
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
@@ -92,6 +90,9 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             beaconManager.bind(this);
             hasBounded = true;
         }
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         View resetButton = findViewById(R.id.resetButton);
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
