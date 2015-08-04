@@ -138,6 +138,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                     }
                 }
                 if (beacon == null) {
+                    createSystemInitialState();
                     return;
                 }
                 total.put(cPOS, total.get(cPOS) + 1);
@@ -371,10 +372,10 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         volume = (float) 1.0;
         newBGTRACK = "00";
         cBGTRACK = "00";
-        newBGplayer = 10;
-        cBGplayer = 11;
+        newBGplayer = 26;
+        cBGplayer = 27;
         ctrl = "Y";
-        ctrlrsv = 0;
+        ctrlrsv = 7;
 
         beaconID = new HashMap<String, Integer>();
         beaconID.put("1340030201", 1);
@@ -386,36 +387,25 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         beaconID.put("1340030207", 7);
         beaconID.put("1340030208", 8);
         beaconID.put("1340030209", 9);
+        beaconID.put("1340030210", 10);
+        beaconID.put("1340030211", 11);
+        beaconID.put("1340030212", 12);
+        beaconID.put("1340030213", 13);
+        beaconID.put("1340030214", 14);
+        beaconID.put("1340030215", 15);
+        beaconID.put("1340030216", 16);
+        beaconID.put("1340030217", 17);
+        beaconID.put("1340030219", 19);
+        beaconID.put("1340030220", 20);
+        beaconID.put("1340030221", 21);
+        beaconID.put("1340030222", 22);
+        beaconID.put("1340030223", 23);
+        beaconID.put("1340030224", 24);
 
         ctrlData = new HashMap<String, String>();
-        ctrlData.put("0001", "S");
-        ctrlData.put("0002", "P02020");
-        ctrlData.put("0003", "EV100");
-        ctrlData.put("0004", "P01100");
-        ctrlData.put("0005", "E");
-        ctrlData.put("0007", "E");
-        ctrlData.put("0009", "NS");
-        ctrlData.put("0101", "N");
-        ctrlData.put("0209", "N");
-        ctrlData.put("0301", "NP05005");
-        ctrlData.put("0401", "P05005");
-        ctrlData.put("0402", "V010");
-        ctrlData.put("0403", "V015");
-        ctrlData.put("0404", "V020");
-        ctrlData.put("0405", "V025");
-        ctrlData.put("0406", "V030");
-        ctrlData.put("0407", "V35");
-        ctrlData.put("0408", "NP06100");
-        ctrlData.put("0409", "NP06100");
-        ctrlData.put("0501", "E");
-        ctrlData.put("0502", "E");
-        ctrlData.put("0503", "E");
-        ctrlData.put("0504", "E");
-        ctrlData.put("0505", "E");
-        ctrlData.put("0506", "E");
-        ctrlData.put("0507", "E");
-        ctrlData.put("0508", "E");
-        ctrlData.put("0509", "E");
+        ctrlData.put("0015", "P01010");
+        ctrlData.put("0016", "P02030");
+        ctrlData.put("0017", "P03100");
 
         initializeResume();
 
@@ -433,10 +423,25 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         total.put(7, 0);
         total.put(8, 0);
         total.put(9, 0);
+        total.put(10, 0);
+        total.put(11, 0);
+        total.put(12, 0);
+        total.put(13, 0);
+        total.put(14, 0);
+        total.put(15, 0);
+        total.put(16, 0);
+        total.put(17, 0);
+        total.put(18, 0);
+        total.put(20, 0);
+        total.put(21, 0);
+        total.put(22, 0);
+        total.put(23, 0);
+        total.put(24, 0);
+        total.put(25, 0);
 
         audio = new ArrayList<MediaPlayerWrapper>();
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 27; i++) {
             MediaPlayerWrapper mediaPlayer = new MediaPlayerWrapper(new MediaPlayer());
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -463,6 +468,20 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         PTresume.put(9, 0);
         PTresume.put(10, 0);
         PTresume.put(11, 0);
+        PTresume.put(12, 0);
+        PTresume.put(13, 0);
+        PTresume.put(14, 0);
+        PTresume.put(15, 0);
+        PTresume.put(16, 0);
+        PTresume.put(17, 0);
+        PTresume.put(18, 0);
+        PTresume.put(19, 0);
+        PTresume.put(20, 0);
+        PTresume.put(21, 0);
+        PTresume.put(22, 0);
+        PTresume.put(23, 0);
+        PTresume.put(24, 0);
+        PTresume.put(25, 0);
     }
 
     private String mid(String str, int start, int length) {
