@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import hive.android.hebron.R;
 import hive.android.hebron.utils.MediaPlayerWrapper;
 
@@ -77,6 +79,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.player_activity);
+        ButterKnife.bind(this);
+
         beaconManager = BeaconManager.getInstanceForApplication(this);
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
@@ -92,19 +96,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        View resetButton = findViewById(R.id.resetButton);
-        resetButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (MediaPlayerWrapper player : audio) {
-                    if (player.isPlaying()) player.stop();
-                    player.release();
-                }
-                createSystemInitialState();
-            }
-        });
-
     }
 
     @Override
@@ -114,6 +105,15 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             beaconManager.unbind(this);
             hasBounded = false;
         }
+    }
+
+    @OnClick(R.id.resetButton)
+    public void onResetClick(View view) {
+        for (MediaPlayerWrapper player : audio) {
+            if (player.isPlaying()) player.stop();
+            player.release();
+        }
+        createSystemInitialState();
     }
 
     @Override
