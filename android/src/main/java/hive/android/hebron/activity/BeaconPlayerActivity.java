@@ -263,8 +263,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
         final MediaPlayerWrapper mediaPlayer = audio.get(cBGplayer);
 
-        if (mediaPlayer.isPlaying())
-            BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
+        if (mediaPlayer.isPlaying()) BGresume.put(cBGTRACK, mediaPlayer.getCurrentPosition() - 2000);
 
         if (!newBGTRACK.equals(cBGTRACK)) {
             fadeOut((float) 0.2, 800, mediaPlayer, new Runnable() {
@@ -385,7 +384,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         cPlayer = 1;
         newPlayer = 2;
         ctrl = "Y";
-        ctrlrsv = 7;
+        ctrlrsv = 0;
 
         beaconID = new HashMap<String, Integer>();
         beaconID.put("1340030201", 1);
@@ -424,7 +423,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
         audio = new ArrayList<MediaPlayerWrapper>();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             MediaPlayerWrapper mediaPlayer = new MediaPlayerWrapper(new MediaPlayer());
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
