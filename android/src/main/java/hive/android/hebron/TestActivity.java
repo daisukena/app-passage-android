@@ -61,7 +61,8 @@ public class TestActivity extends Activity {
         setContentView(R.layout.player_activity);
 
         newPOS = 6;
-        List<Integer> positions = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
+//        List<Integer> positions = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
+        List<Integer> positions = Arrays.asList(1, 15, 16, 17, 18);
         final Iterator<Integer> iterator = positions.iterator();
 
         final Handler h2 = new Handler(Looper.getMainLooper());
@@ -69,10 +70,10 @@ public class TestActivity extends Activity {
             @Override
             public void run() {
                 newPOS = iterator.next();
-                h2.postDelayed(this, 8000);
+                h2.postDelayed(this, 4000);
 
             }
-        }, 8000);
+        }, 4000);
 
         final Handler h1 = new Handler(Looper.getMainLooper());
         h1.postDelayed(new Runnable() {
@@ -428,7 +429,7 @@ public class TestActivity extends Activity {
 
     private void BGfadein() {
         MediaPlayerWrapper mediaPlayer = audio.get(newBGplayer);
-        if (BGresume.get(newBGTRACK) > 0) {
+        if (mediaPlayer.isPlaying() && BGresume.get(newBGTRACK) != null && BGresume.get(newBGTRACK) > 0) {
             if (mediaPlayer.isPlaying()) audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK));
         }
         fadeOut(volume, 800, mediaPlayer, null);

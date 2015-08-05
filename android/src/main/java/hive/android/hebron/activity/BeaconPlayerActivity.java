@@ -527,7 +527,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
 
     private void BGfadein() {
         MediaPlayerWrapper mediaPlayer = audio.get(newBGplayer);
-        if (BGresume.get(newBGTRACK) > 0) {
+        if (mediaPlayer.isPlaying() && BGresume.get(newBGTRACK) != null && BGresume.get(newBGTRACK) > 0) {
             if (mediaPlayer.isPlaying()) audio.get(newBGplayer).seekTo(BGresume.get(newBGTRACK));
         }
         fadeOut(volume, 800, mediaPlayer, null);
