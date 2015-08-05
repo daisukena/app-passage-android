@@ -335,7 +335,10 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
                     audio.setVolume(newVolume);
                     if (time > 0) h.postDelayed(this, 100);
                     else {
-                        if (targetVolume == 0 && audio.isPlaying()) audio.pause();
+                        if (targetVolume == 0 && audio.isPlaying()) {
+                            audio.stop();
+                            audio.release();
+                        }
                         if (task != null) task.run();
                     }
                 } else {
@@ -349,7 +352,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
         }
-        mediaPlayer.reset();
+        mediaPlayer.release();
         AssetFileDescriptor raw = getApplicationContext().getAssets().openFd(media);
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
