@@ -9,6 +9,8 @@ public class MediaPlayerWrapper {
 
     private MediaPlayer mediaPlayer;
 
+    private String currentTrack;
+
     private volatile float volume = 1;
 
     public MediaPlayerWrapper(MediaPlayer mediaPlayer) {
@@ -76,6 +78,12 @@ public class MediaPlayerWrapper {
         mediaPlayer.setAudioStreamType(var1);
     }
 
+    public String getCurrentTrack() {
+        return currentTrack;
+    }
 
+    public void setCurrentTrack(String currentTrack) {
+        this.currentTrack = currentTrack;
+    }
 }
 
