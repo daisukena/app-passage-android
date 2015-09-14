@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -541,4 +542,27 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         }
         fadeOut(volume, 800, mediaPlayer, null);
     }
+
+    public static Beacon getBeacon(Collection<Beacon> beacons, Map<String, Integer> beaconID){
+        String deviceId = "";
+        double distance;
+        double minDistance = -1;
+        Beacon resultBeacon = null;
+        Iterator<Beacon> iterator = beacons.iterator();
+        while(iterator.hasNext()){
+            Beacon beacon = iterator.next();
+            deviceId = String.format("%s:%s:%s", beacon.getId1().toString(), beacon.getId2().toString(), beacon.getId3().toString());
+            distance = beacon.getDistance();
+            Log.d("getBeacon", deviceId + ":distance = " + Double.toString(distance));
+            if ((minDistance < 0 || distance < minDistance)
+                    && beaconID.get(beacon.getId2().toString() + beacon.getId3().toHexString())/*"\(beacon.major)\(beacon.minor)"*/ != null
+                    ) {
+                minDistance = distance;
+                resultBeacon = beacon;
+            }
+        }
+        return resultBeacon;
+
+    }
+
 }
