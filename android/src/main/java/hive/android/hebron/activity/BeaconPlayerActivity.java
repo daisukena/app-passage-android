@@ -136,6 +136,11 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             }
             region = null;
         }
+
+        DataManager.getInstance().setOnsite(false);
+        DataManager.getInstance().setDownloadcompleted(false);
+        DataManager.getInstance().setReadytoPlay(0);
+
     }
 
     @Override
