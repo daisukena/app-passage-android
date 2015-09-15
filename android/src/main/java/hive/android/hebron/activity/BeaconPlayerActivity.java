@@ -81,8 +81,6 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         createSystemInitialState();
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
-//        beaconManager.getBeaconParsers().clear();
-//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {

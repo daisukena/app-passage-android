@@ -3,7 +3,6 @@ package hive.android.hebron.activity;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
@@ -15,7 +14,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
@@ -24,7 +22,6 @@ import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
-import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.apache.http.HttpResponse;
@@ -51,7 +48,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import hive.android.hebron.R;
 import hive.android.hebron.utils.DataManager;
@@ -70,14 +66,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
     private static final String PROJECT_HTML = "projects.html";
     WebView webView;
 
-    private boolean needToReload;
     private ArrayList<String> mp3FileArray;
 
     private String project_name;
     private String project_id;
     private String project_url;
-    private String project_firstbeacon;
-    private String beaconsIDSelf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,15 +89,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 Toast.makeText(WebViewActivity.this, message, Toast.LENGTH_LONG).show();
                 result.confirm();
                 return true;
-//                return super.onJsAlert(view, url, message, result);
             }
-//            @Override
-//            public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
-//                Toast.makeText(WebViewActivity.this, message, Toast.LENGTH_LONG).show();
-//                result.confirm();
-//                return true;
-////                return super.onJsConfirm(view, url, message, result);
-//            }
         });
         webView.loadUrl(HOME_URL);
 
@@ -120,8 +105,6 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                     public void run() {
                         Animation anim = AnimationUtils.loadAnimation(WebViewActivity.this, R.anim.fade_out);
                         findViewById(R.id.imageView).startAnimation(anim);
-//                        findViewById(R.id.textViewTitle).startAnimation(anim);
-//                        findViewById(R.id.textViewCopyright).startAnimation(anim);
                         anim.setAnimationListener(new Animation.AnimationListener() {
                             @Override
                             public void onAnimationStart(Animation animation) {
@@ -129,15 +112,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                             @Override
                             public void onAnimationEnd(Animation animation) {
                                 findViewById(R.id.imageView).setVisibility(View.GONE);
-//                                findViewById(R.id.textViewTitle).setVisibility(View.GONE);
-//                                findViewById(R.id.textViewCopyright).setVisibility(View.GONE);
                             }
                             @Override
                             public void onAnimationRepeat(Animation animation) {
                             }
                         });
-//                        findViewById(R.id.textViewCopyright).setVisibility(View.GONE);
-//                        findViewById(R.id.webView).setVisibility(View.VISIBLE);
                     }
                 });
             }
@@ -299,13 +278,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
     class DownloadThread implements Runnable {
 
-        private Context context;
         private String url;
         private DownloadThreadCallback callback;
         private String data;
 
-        DownloadThread(Context context, String url, DownloadThreadCallback callback){
-            this.context = context;
+        DownloadThread(String url, DownloadThreadCallback callback){
             this.url = url;
             this.callback = callback;
         }
@@ -324,23 +301,17 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 callback.onCallbackDownloded(url, data);
 
                 Log.d("HTTP", "thread finished");
-            } catch(Exception ex) {
-                System.out.println(ex);
+            } catch(Exception e) {
+                e.printStackTrace();
                 showWaitDialog(false);
             }
         }
     }
     void startDownloadThread(String url, DownloadThreadCallback callback){
-        Thread thread = new Thread(new DownloadThread(this, url, callback));
+        Thread thread = new Thread(new DownloadThread(url, callback));
         thread.start();
     }
 
-    private static final String ERR_REPLACE_1A = '"' + " " + '"';
-    private static final String ERR_REPLACE_1B = '"' + "," + '"';
-    private static final String ERR_REPLACE_2A = " 1:";
-    private static final String ERR_REPLACE_2B = " " +  '"' + "1" + '"' + ":";
-    private static final String ERR_REPLACE_3A = " 2:";
-    private static final String ERR_REPLACE_3B = " " +  '"' + "2" + '"' + ":";
     private ProgressDialog waitDialog;
     void doDownload(){
 
@@ -359,15 +330,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 try {
                     Map<String, String> map = DataManager.getInstance(WebViewActivity.this).getCtrlDatas();
                     map.clear();
-                    //TODO replace for no exist separator error
-//                    if(data.contains(ERR_REPLACE_1A)){
-//                        data = data.replace(ERR_REPLACE_1A, ERR_REPLACE_1B);
-//                    }
 
                     JSONObject json = new JSONObject(data);
-                    Iterator<String> it = json.keys();
+                    Iterator it = json.keys();
                     while (it.hasNext()) {
-                        String key = it.next();
+                        String key = (String)it.next();
                         map.put(key, (String)json.get(key));
                     }
                 } catch (JSONException e) {
@@ -385,17 +352,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 try {
                     ArrayList<String> list = DataManager.getInstance(WebViewActivity.this).getProjects();
                     list.clear();
-                    //TODO replace for error: org.json.JSONException: Names must be strings, but 1 is of type java.lang.Integer at character 3 of { 1:"brixton", 2:"edinburgh" ...
-//                    if(data.contains(ERR_REPLACE_2A)){
-//                        data = data.replace(ERR_REPLACE_2A, ERR_REPLACE_2B);
-//                    }
-//                    if(data.contains(ERR_REPLACE_3A)){
-//                        data = data.replace(ERR_REPLACE_3A, ERR_REPLACE_3B);
-//                    }
+
                     JSONObject json = new JSONObject(data);
-                    Iterator<String> it = json.keys();
+                    Iterator it = json.keys();
                     while (it.hasNext()) {
-                        String key = it.next();
+                        String key = (String)it.next();
                         list.add((String) json.get(key));
                     }
                 } catch (JSONException e) {
@@ -410,7 +371,6 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
             @Override
             public void onCallbackDownloded(String url, String data) {
                 Log.d(TAG, "firstbeacon.txt: " + data);
-                WebViewActivity.this.project_firstbeacon = data;
                 DataManager.getInstance(WebViewActivity.this).setProject_firstbeacon(data);
             }
         });
@@ -426,9 +386,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                     Map<String,Integer> map = DataManager.getInstance(WebViewActivity.this).getBeaconID();
                     map.clear();
                     JSONObject json = new JSONObject(data);
-                    Iterator<String> it = json.keys();
+                    Iterator it = json.keys();
                     while (it.hasNext()) {
-                        String key = it.next();
+                        String key = (String)it.next();
                         if(!key.equals("version")){
                             if(DataManager.isDebug() && (Integer)json.get(key) == 9){
                                 map.put(DataManager.DEBUG_FIRST_BEACON, 9);
@@ -482,7 +442,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         if(saveFiles != null && saveFiles.size() != 0){
             Mp3File savedFileFirst = saveFiles.get(0);
             File file = new File(savedFileFirst.getFilePath());
-            if(file != null && file.exists()){
+            if(file.exists()){
                 Log.d(TAG, "The files do exist");
             }else{
                 Log.d(TAG, "The files do not exist");
@@ -491,11 +451,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         }
 
         mp3FileArray = new ArrayList<String>();
-        if(saveFiles.size() == 36){
+        if(saveFiles != null && saveFiles.size() == 36){
             dataManager.setDownloadcompleted(true);
             gotoNextVC();
             return;
-        }else if(saveFiles.size() == 0){
+        }else if(saveFiles != null && saveFiles.size() == 0){
             mp3FileArray = mp3fileNames;
         }else{
 
@@ -503,17 +463,16 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 Log.d(TAG, downFile);
 
                 boolean flag = false;
-
-                for(Mp3File  savedFile : saveFiles){
-                    if(downFile.compareTo(savedFile.getFileName()) == 0){
-                        flag = true;
-                        break;
+                if(saveFiles != null) {
+                    for (Mp3File savedFile : saveFiles) {
+                        if (downFile.compareTo(savedFile.getFileName()) == 0) {
+                            flag = true;
+                            break;
+                        }
                     }
                 }
 
-                if(flag){
-                    continue;
-                }else{
+                if(!flag){
                     mp3FileArray.add(downFile);
                 }
             }
@@ -546,7 +505,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         DataManager dataManager = DataManager.getInstance();
 
 
-        int responseCode = 0;
+        int responseCode;
         int BUFFER_SIZE = 2048;
 
         try{
@@ -554,9 +513,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
             HttpClient hClient = new DefaultHttpClient();
             HttpGet hGet = new HttpGet();
-            HttpResponse hResp = null;
+            HttpResponse hResp;
 
-            hClient.getParams().setParameter("http.connection.timeout", new Integer(15000));
+            hClient.getParams().setParameter("http.connection.timeout", 15000);
 
             hGet.setURI(url);
 
@@ -567,13 +526,12 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
             if (responseCode == HttpStatus.SC_OK) {
                 String path = this.getFilesDir().getAbsolutePath() + "/" + filename;
                 File file = new File(path);
-                file.getParentFile().mkdir();
                 InputStream is = hResp.getEntity().getContent();
                 BufferedInputStream in = new BufferedInputStream(is, BUFFER_SIZE);
                 BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file, false), BUFFER_SIZE);
 
                 byte buf[] = new byte[BUFFER_SIZE];
-                int size = -1;
+                int size;
                 while((size = in.read(buf)) != -1) {
                     out.write(buf, 0, size);
                 }
@@ -743,10 +701,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
     //for Beacon
 
-    public final UUID REGION_UUID = UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
-    public final Identifier IDENTIFIER_UUID = Identifier.fromUuid(REGION_UUID);
     private BeaconManager beaconManager;
-//    private boolean hasBounded = false;
 
     private boolean flagConnectedBeaconService = false;
 
@@ -770,7 +725,6 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 Toast.makeText(this, "Please, enable Bluetooth Adapter", Toast.LENGTH_SHORT).show();
             }
             beaconManager.bind(this);
-//            hasBounded = true;
         }
     }
 
@@ -801,20 +755,6 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         beaconManager.setRangeNotifier(this);
 
         regionRanging = BeaconPlayerActivity.startRangingBeaconsInRegion(beaconManager, regionRanging);
-//        try {
-//            Identifier id = IDENTIFIER_UUID;
-//            if(DataManager.isDebug()){
-//                id = DataManager.DEBUG_IDENTIFIER_UUID;
-//            }
-//            if(regionRanging != null){
-//                beaconManager.stopRangingBeaconsInRegion(regionRanging);
-//                regionRanging = null;
-//            }
-//            regionRanging = new Region("EstimoteRegion", id, null, null);
-//            beaconManager.startRangingBeaconsInRegion(regionRanging);
-//        } catch (RemoteException e) {
-//            Log.d(TAG, "Start monitoring beacons");
-//        }
 
     }
     private Region regionRanging;
