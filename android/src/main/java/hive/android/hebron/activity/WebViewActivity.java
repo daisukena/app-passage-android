@@ -10,6 +10,11 @@ import android.os.Handler;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.webkit.JsResult;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -44,6 +49,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import hive.android.hebron.R;
@@ -56,7 +63,7 @@ interface DownloadThreadCallback{
 }
 
 
-public class WebViewActivity extends Activity implements BeaconConsumer {
+public class WebViewActivity extends Activity implements BeaconConsumer, RangeNotifier {
 
     private static final String TAG = "WebViewActivity";
     private static final String HOME_URL = "http://passagetellsproject.net/app/";
@@ -81,10 +88,62 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
 
         webView = (WebView)findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         webView.setWebViewClient(new WebViewClientLocal());
+        webView.setWebChromeClient(new WebChromeClient(){//for java script popup
+            @Override
+            public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+                Toast.makeText(WebViewActivity.this, message, Toast.LENGTH_LONG).show();
+                result.confirm();
+                return true;
+//                return super.onJsAlert(view, url, message, result);
+            }
+//            @Override
+//            public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+//                Toast.makeText(WebViewActivity.this, message, Toast.LENGTH_LONG).show();
+//                result.confirm();
+//                return true;
+////                return super.onJsConfirm(view, url, message, result);
+//            }
+        });
         webView.loadUrl(HOME_URL);
 
         checkAuthorizationStatus();
+
+        Timer timer = new Timer(false);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Log.d(TAG, "timer task");
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Animation anim = AnimationUtils.loadAnimation(WebViewActivity.this, R.anim.fade_out);
+                        findViewById(R.id.imageView).startAnimation(anim);
+//                        findViewById(R.id.textViewTitle).startAnimation(anim);
+//                        findViewById(R.id.textViewCopyright).startAnimation(anim);
+                        anim.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
+                            }
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                findViewById(R.id.imageView).setVisibility(View.GONE);
+//                                findViewById(R.id.textViewTitle).setVisibility(View.GONE);
+//                                findViewById(R.id.textViewCopyright).setVisibility(View.GONE);
+                            }
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+                            }
+                        });
+//                        findViewById(R.id.textViewCopyright).setVisibility(View.GONE);
+//                        findViewById(R.id.webView).setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        }, 1000);
+
+
     }
 
     @Override
@@ -160,7 +219,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                         String fileURL = project_url;
                         fileURL += "intro.html";
 
-                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+//                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
                         webView.loadUrl(fileURL);
 
                         return false;
@@ -168,9 +227,8 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                     } else if (actionsAndParams.contains("download")) {
                         Log.d(TAG, "passagetells///download action");
 
-                        doDownload();
-
                         webView.stopLoading();
+                        doDownload();
 
                         return false;
 
@@ -183,14 +241,13 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                         fileURL += "start.html";
                         Log.d(TAG, "fileURL:" + fileURL);
 
-                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+//                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
                         webView.loadUrl(fileURL);
 
                     }else if(actionsAndParams.contains("play")){
 
-                        //TODO move playing screen
-                        final Intent intent = new Intent(WebViewActivity.this, BeaconPlayerActivity.class);
-                        view.getContext().startActivity(intent);
+                        //move playing screen
+                        showPlayerActivity();
 
                     }else if(actionsAndParams.contains("home")){
 
@@ -200,10 +257,10 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
 
                         Log.d(TAG, "home: ");
                         String fileURL = HOME_URL;
-                        fileURL += "projects.html";
+                        fileURL += PROJECT_HTML;
                         Log.d(TAG, "fileURL:" + fileURL);
 
-                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+//                        webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
                         webView.loadUrl(fileURL);
 
                     }
@@ -303,9 +360,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                     Map<String, String> map = DataManager.getInstance(WebViewActivity.this).getCtrlDatas();
                     map.clear();
                     //TODO replace for no exist separator error
-                    if(data.contains(ERR_REPLACE_1A)){
-                        data = data.replace(ERR_REPLACE_1A, ERR_REPLACE_1B);
-                    }
+//                    if(data.contains(ERR_REPLACE_1A)){
+//                        data = data.replace(ERR_REPLACE_1A, ERR_REPLACE_1B);
+//                    }
 
                     JSONObject json = new JSONObject(data);
                     Iterator<String> it = json.keys();
@@ -329,12 +386,12 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                     ArrayList<String> list = DataManager.getInstance(WebViewActivity.this).getProjects();
                     list.clear();
                     //TODO replace for error: org.json.JSONException: Names must be strings, but 1 is of type java.lang.Integer at character 3 of { 1:"brixton", 2:"edinburgh" ...
-                    if(data.contains(ERR_REPLACE_2A)){
-                        data = data.replace(ERR_REPLACE_2A, ERR_REPLACE_2B);
-                    }
-                    if(data.contains(ERR_REPLACE_3A)){
-                        data = data.replace(ERR_REPLACE_3A, ERR_REPLACE_3B);
-                    }
+//                    if(data.contains(ERR_REPLACE_2A)){
+//                        data = data.replace(ERR_REPLACE_2A, ERR_REPLACE_2B);
+//                    }
+//                    if(data.contains(ERR_REPLACE_3A)){
+//                        data = data.replace(ERR_REPLACE_3A, ERR_REPLACE_3B);
+//                    }
                     JSONObject json = new JSONObject(data);
                     Iterator<String> it = json.keys();
                     while (it.hasNext()) {
@@ -373,7 +430,11 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
                     while (it.hasNext()) {
                         String key = it.next();
                         if(!key.equals("version")){
-                            map.put(key, (Integer)json.get(key));
+                            if(DataManager.isDebug() && (Integer)json.get(key) == 9){
+                                map.put(DataManager.DEBUG_FIRST_BEACON, 9);
+                            }else {
+                                map.put(key, (Integer) json.get(key));
+                            }
                         }
                     }
                 } catch (JSONException e) {
@@ -693,12 +754,12 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
     public void onBeaconServiceConnect() {
         flagConnectedBeaconService = true;
         Log.d(TAG, "onBeaconServiceConnect");
-
     }
 
     void checkBluetoothAdapter(){
         if(beaconManager == null){
             beaconManager = BeaconManager.getInstanceForApplication(this);
+            beaconManager.getBeaconParsers().clear();
             beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
         }
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -737,87 +798,102 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
             Log.d(TAG, "startBeaconCheck: no connection");
             return;
         }
-        beaconManager.setRangeNotifier(new RangeNotifier() {
-            @Override
-            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        beaconManager.setRangeNotifier(this);
 
-                Log.d(TAG, "mark 3 location manager called.");
-                if(beacons == null){
-                    Log.d(TAG, "beacons are  null but didRange called");
-                }else{
-                    Log.d(TAG, "beacons are NOT  null and didRange called");
-
-                    DataManager dataManager = DataManager.getInstance();
-                    Map<String, Integer> beaconID = dataManager.getBeaconID();
-
-                    if(beacons.size() == 0) { return; }
-                    Log.d(TAG, "beacons count is not 0");
-                    Log.d(TAG, "count:" + beacons.size());
-                    if(beaconID == null){
-                        Log.d(TAG, "and beacon id is null");
-                    }
-                    //Log.d(TAG, "%l",[[dataManager.beaconID] count]);
-
-                    Beacon beacon = BeaconPlayerActivity.getBeacon(beacons, beaconID);
-                    if(beacon!= null){
-
-                        if(!dataManager.isOnsite()){
-                            dataManager.setOnsite(true);
-                            //[_sysmsg setText:@"onsite status has been changed: false->true while downloading process"];
-                            if(dataManager.isDownloadcompleted()){
-                                gotoNextVC();
-                                //[_sysmsg setText:@"onsite status has been changed: false->true while viewing slider.html"];
-                            }
-                        } else {
-                            if(dataManager.isDownloadcompleted() && dataManager.getReadytoPlay() > 0 ){
-                                //[_sysmsg setText:@"ready to play"];
-                                String beaconmajorminor = String.format("%s%s",beacon.getId2().toString(), beacon.getId3());
-                                Log.d(TAG, dataManager.getProject_firstbeacon());
-                                Log.d(TAG, beaconmajorminor);
-                                if(dataManager.getProject_firstbeacon().equals(beaconmajorminor)){
-                                    if(dataManager.isDownloadcompleted() && dataManager.getReadytoPlay() > 4 ){
-                                        //[_sysmsg setText:@"Play!!!"];
-
-                                        try {
-                                            beaconManager.stopRangingBeaconsInRegion(regionRanging);
-                                        } catch (RemoteException e) {
-                                            e.printStackTrace();
-                                        }
-
-                                        //TODO
-                                        Intent intent = new Intent(WebViewActivity.this, BeaconPlayerActivity.class);
-                                        WebViewActivity.this.startActivity(intent);
-
-                                    } else {
-                                        dataManager.setReadytoPlay(dataManager.getReadytoPlay() + 1);
-                                        Log.d(TAG, "readytoplay value:" + dataManager.getReadytoPlay());
-                                    }
-                                } else {
-                                    Log.d(TAG, "(need more value) readytoplay value:" + dataManager.getReadytoPlay());
-                                }
-                            } else {
-                                Log.d(TAG, "not ready to play");
-                            }
-                        }
-                        //Log.d(TAG, "mark 5 beacon in the ids found. set on site. ");
-                        String beaconmajorminor = String.format("%s%s", beacon.getId2(), beacon.getId3());
-                        Log.d(TAG, "beacon's major+minor: ");
-                        Log.d(TAG, beaconmajorminor);
-
-                    }
-
-                }
-            }
-        });
-        try {
-            regionRanging = new Region("EstimoteRegion", IDENTIFIER_UUID, null, null);
-            beaconManager.startRangingBeaconsInRegion(regionRanging);
-        } catch (RemoteException e) {
-            Log.d(TAG, "Start monitoring beacons");
-        }
+        regionRanging = BeaconPlayerActivity.startRangingBeaconsInRegion(beaconManager, regionRanging);
+//        try {
+//            Identifier id = IDENTIFIER_UUID;
+//            if(DataManager.isDebug()){
+//                id = DataManager.DEBUG_IDENTIFIER_UUID;
+//            }
+//            if(regionRanging != null){
+//                beaconManager.stopRangingBeaconsInRegion(regionRanging);
+//                regionRanging = null;
+//            }
+//            regionRanging = new Region("EstimoteRegion", id, null, null);
+//            beaconManager.startRangingBeaconsInRegion(regionRanging);
+//        } catch (RemoteException e) {
+//            Log.d(TAG, "Start monitoring beacons");
+//        }
 
     }
     private Region regionRanging;
+
+    @Override
+    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+
+        Log.d(TAG, "mark 3 location manager called.");
+        if (beacons == null) {
+            Log.d(TAG, "beacons are  null but didRange called");
+        } else {
+            Log.d(TAG, "beacons are NOT  null and didRange called");
+
+            DataManager dataManager = DataManager.getInstance();
+            Map<String, Integer> beaconID = dataManager.getBeaconID();
+
+            if (beacons.size() == 0) {
+                return;
+            }
+            Log.d(TAG, "beacons count is not 0");
+            Log.d(TAG, "count:" + beacons.size());
+            if (beaconID == null) {
+                Log.d(TAG, "and beacon id is null");
+            }
+            //Log.d(TAG, "%l",[[dataManager.beaconID] count]);
+
+            Beacon beacon = BeaconPlayerActivity.getBeacon(beacons, beaconID);
+            if (beacon != null) {
+
+                if (!dataManager.isOnsite()) {
+                    dataManager.setOnsite(true);
+                    //[_sysmsg setText:@"onsite status has been changed: false->true while downloading process"];
+                    if (dataManager.isDownloadcompleted()) {
+                        gotoNextVC();
+                        //[_sysmsg setText:@"onsite status has been changed: false->true while viewing slider.html"];
+                    }
+                } else {
+                    if (dataManager.isDownloadcompleted() && dataManager.getReadytoPlay() > 0) {
+                        //[_sysmsg setText:@"ready to play"];
+                        String beaconmajorminor = String.format("%s%s", beacon.getId2().toString(), beacon.getId3());
+                        if(DataManager.isDebug()){
+                            DataManager.getInstance().setProject_firstbeacon(DataManager.DEBUG_FIRST_BEACON);
+                        }
+                        Log.d(TAG, dataManager.getProject_firstbeacon());
+                        Log.d(TAG, beaconmajorminor);
+                        if (dataManager.getProject_firstbeacon().equals(beaconmajorminor)) {
+                            if (dataManager.isDownloadcompleted() && dataManager.getReadytoPlay() > 4) {
+                                //[_sysmsg setText:@"Play!!!"];
+
+                                try {
+                                    beaconManager.stopRangingBeaconsInRegion(regionRanging);
+                                    regionRanging = null;
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+
+                                //move player activity
+                                showPlayerActivity();
+
+                            } else {
+                                dataManager.setReadytoPlay(dataManager.getReadytoPlay() + 1);
+                                Log.d(TAG, "readytoplay value:" + dataManager.getReadytoPlay());
+                            }
+                        } else {
+                            Log.d(TAG, "(need more value) readytoplay value:" + dataManager.getReadytoPlay());
+                        }
+                    } else {
+                        Log.d(TAG, "not ready to play");
+                    }
+                }
+                //Log.d(TAG, "mark 5 beacon in the ids found. set on site. ");
+                String beaconmajorminor = String.format("%s%s", beacon.getId2(), beacon.getId3());
+                Log.d(TAG, "beacon's major+minor: ");
+                Log.d(TAG, beaconmajorminor);
+
+            }
+
+        }
+    }
 
     @Override
     protected void onResume() {
@@ -833,5 +909,27 @@ public class WebViewActivity extends Activity implements BeaconConsumer {
             beaconManager.unbind(this);
 //            hasBounded = false;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        backProjectHtml();
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    void showPlayerActivity(){
+        backProjectHtml();
+        Intent intent = new Intent(WebViewActivity.this, BeaconPlayerActivity.class);
+        WebViewActivity.this.startActivityForResult(intent, 0);
+    }
+
+    void backProjectHtml(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                webView.loadUrl(HOME_URL + PROJECT_HTML);
+                webView.clearHistory();
+            }
+        });
     }
 }

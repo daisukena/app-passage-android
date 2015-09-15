@@ -18,7 +18,6 @@ import android.widget.Toast;
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
@@ -36,12 +35,13 @@ import java.util.UUID;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import hive.android.hebron.R;
+import hive.android.hebron.utils.DataManager;
 import hive.android.hebron.utils.MediaPlayerWrapper;
 
 public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
-    public final UUID REGION_UUID = UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
-    public final Identifier IDENTIFIER_UUID = Identifier.fromUuid(REGION_UUID);
-    protected final String TAG = "BeaconPlayerActivity";
+    public static final UUID REGION_UUID = UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D");
+    public static final Identifier IDENTIFIER_UUID = Identifier.fromUuid(REGION_UUID);
+    protected static final String TAG = "BeaconPlayerActivity";
     private BeaconManager beaconManager;
     private boolean hasBounded = false;
     private Map<String, Integer> beaconID;
@@ -75,13 +75,14 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.player_activity);
+        setContentView(R.layout.playing_activity);
         ButterKnife.bind(this);
 
         createSystemInitialState();
 
         beaconManager = BeaconManager.getInstanceForApplication(this);
-        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+//        beaconManager.getBeaconParsers().clear();
+//        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -116,6 +117,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     @OnClick(R.id.resetButton)
     public void onResetClick(View view) {
         resetCurrentState();
+        finish();
     }
 
     private void resetCurrentState() {
@@ -124,6 +126,16 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             player.reset();
         }
         createSystemInitialState();
+
+        //stop
+        if(region != null){
+            try {
+                beaconManager.stopRangingBeaconsInRegion(region);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            region = null;
+        }
     }
 
     @Override
@@ -215,11 +227,26 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        region = startRangingBeaconsInRegion(beaconManager, region);
+    }
+    private Region region;
+    public static Region startRangingBeaconsInRegion(BeaconManager beaconManager, Region region){
         try {
-            beaconManager.startRangingBeaconsInRegion(new Region("EstimoteRegion", IDENTIFIER_UUID, null, null));
+            if(region != null){
+                beaconManager.stopRangingBeaconsInRegion(region);
+            }
+            Identifier id = IDENTIFIER_UUID;
+            if(DataManager.isDebug()){
+                id = DataManager.DEBUG_IDENTIFIER_UUID;
+            }
+            region = new Region("EstimoteRegion", id, null, null);
+            beaconManager.startRangingBeaconsInRegion(region);
+
         } catch (RemoteException e) {
             Log.d(TAG, "Start monitoring beacons");
         }
+        return region;
     }
 
     private void PTctrlGet() {
@@ -390,36 +417,8 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
         ctrl = "Y";
         ctrlrsv = 0;
 
-        beaconID = new HashMap<String, Integer>();
-        beaconID.put("1340030201", 1);
-        beaconID.put("1340030202", 2);
-        beaconID.put("1340030203", 3);
-        beaconID.put("1340030204", 4);
-        beaconID.put("1340030205", 5);
-        beaconID.put("1340030206", 6);
-        beaconID.put("1340030207", 7);
-        beaconID.put("1340030208", 8);
-        beaconID.put("1340030209", 9);
-        beaconID.put("1340030210", 10);
-        beaconID.put("1340030211", 11);
-        beaconID.put("1340030212", 12);
-        beaconID.put("1340030213", 13);
-        beaconID.put("1340030214", 14);
-        beaconID.put("1340030215", 15);
-        beaconID.put("1340030216", 16);
-        beaconID.put("1340030217", 17);
-        beaconID.put("1340030219", 19);
-        beaconID.put("1340030220", 20);
-        beaconID.put("1340030221", 21);
-        beaconID.put("1340030222", 22);
-        beaconID.put("1340030223", 23);
-        beaconID.put("1340030224", 24);
-
-        ctrlData = new HashMap<String, String>();
-        ctrlData.put("0015", "P01010");
-        ctrlData.put("0016", "P02030");
-        ctrlData.put("0017", "P03100");
-
+        beaconID = DataManager.getInstance().getBeaconID();
+        ctrlData = DataManager.getInstance().getCtrlDatas();
         initializeResume();
 
         BGresume = new HashMap<String, Integer>();
@@ -544,7 +543,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
     }
 
     public static Beacon getBeacon(Collection<Beacon> beacons, Map<String, Integer> beaconID){
-        String deviceId = "";
+        String deviceId;
         double distance;
         double minDistance = -1;
         Beacon resultBeacon = null;
@@ -555,7 +554,7 @@ public class BeaconPlayerActivity extends Activity implements BeaconConsumer {
             distance = beacon.getDistance();
             Log.d("getBeacon", deviceId + ":distance = " + Double.toString(distance));
             if ((minDistance < 0 || distance < minDistance)
-                    && beaconID.get(beacon.getId2().toString() + beacon.getId3().toHexString())/*"\(beacon.major)\(beacon.minor)"*/ != null
+                    && beaconID.get(beacon.getId2().toString() + beacon.getId3().toString()) != null
                     ) {
                 minDistance = distance;
                 resultBeacon = beacon;

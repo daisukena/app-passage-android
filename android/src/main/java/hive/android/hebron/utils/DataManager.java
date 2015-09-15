@@ -4,11 +4,19 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import org.altbeacon.beacon.Identifier;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DataManager {
+    private static boolean DEBUG_FLAG = false;//TODO for test
+    public static final Identifier DEBUG_IDENTIFIER_UUID = null;//test beacon uuid
+    public static final String DEBUG_FIRST_BEACON = "345822770";//test beacon major + minor
+    public static boolean isDebug(){
+        return DEBUG_FLAG;
+    }
 
     private Context context;
     private static DataManager instance = null;
