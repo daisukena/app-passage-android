@@ -227,6 +227,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
                         //move playing screen
                         showPlayerActivity();
+                        return true;
 
                     }else if(actionsAndParams.contains("home")){
 
@@ -249,22 +250,21 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 }else if(scheme.equals("mozilla")){
 
                     String linkURL = url.replace("mozilla://", "http://");
-                    webView.stopLoading();
-                    webView.loadUrl(linkURL);
+                    doExecuteApplication(linkURL);
+                    return true;
 
-                    // http://maps.apple.com/ is address for iOS Maps App
-
-                    return false;
                 }else if(scheme.equals("mailto") || scheme.equals("tel")){
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                    startActivity(intent);
-                    return false;
+
+                    doExecuteApplication(url);
+                    return true;
+
                 }else if(scheme.equals("comgooglemaps")){
-                    String linkURL = url.replace("comgooglemaps://", "https://maps.google.com/maps?" + uri.getQuery());
+
+                    String linkURL = url.replace("comgooglemaps://", "https://maps.google.com/maps");
                     Log.d("comgooglemaps", linkURL);
-                    webView.stopLoading();
-                    webView.loadUrl(linkURL);
-                    return false;
+                    doExecuteApplication(linkURL);
+                    return true;
+
                 }
 
             }catch(Exception e){
@@ -273,6 +273,12 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
             return super.shouldOverrideUrlLoading(view, url);
         }
+    }
+
+    void doExecuteApplication(String url){
+        Uri uri = Uri.parse(url);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        startActivity(intent);
     }
 
 
@@ -858,7 +864,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
     }
 
     void showPlayerActivity(){
-        backProjectHtml();
+//        backProjectHtml();
         Intent intent = new Intent(WebViewActivity.this, BeaconPlayerActivity.class);
         WebViewActivity.this.startActivityForResult(intent, 0);
     }
