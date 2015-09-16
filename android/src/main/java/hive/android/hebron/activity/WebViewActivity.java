@@ -155,10 +155,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.i(TAG, url);
 
-            errorFlag = false;
             if(!isNetworkAvailable()){
                 webView.stopLoading();
-                showErrorDialog(url);
+                showErrorDialog(HOME_URL);//force back start page
                 return false;
             }
 
@@ -292,7 +291,6 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             view.setVisibility(View.INVISIBLE);
-            errorFlag = true;
             showErrorDialog(failingUrl);
             super.onReceivedError(view, errorCode, description, failingUrl);
         }
@@ -304,9 +302,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         @Override
         public void onPageFinished(WebView view, String url) {
             view.setVisibility(errorFlag ? View.INVISIBLE : View.VISIBLE);
-            errorFlag = false;
             super.onPageFinished(view, url);
         }
+
     }
     void showErrorDialog(String url){
         errorFlag = true;
@@ -320,6 +318,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 "Reload",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        errorFlag = false;
                         webView.loadUrl(errorUrl);
                     }
                 });
