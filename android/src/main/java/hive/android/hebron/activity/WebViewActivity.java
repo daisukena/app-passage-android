@@ -149,13 +149,18 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
     private static final String SCHEME_PASSAGETELLS = "passagetells";
 
+    private boolean errorFlag = false;
     class WebViewClientLocal extends WebViewClient{
-        boolean errorFlag;
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.i(TAG, url);
 
             errorFlag = false;
+            if(!isNetworkAvailable()){
+                webView.stopLoading();
+                showErrorDialog(url);
+                return false;
+            }
 
             //NO.1 Step1 Select project
             if(url.indexOf("/d/intro.html") > 0){
@@ -304,6 +309,8 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         }
     }
     void showErrorDialog(String url){
+        errorFlag = true;
+        webView.setVisibility(View.INVISIBLE);
         final String errorUrl = url;
         AlertDialog.Builder alertDlg = new AlertDialog.Builder(this);
         alertDlg.setTitle(R.string.webview_error_dialog_title);
