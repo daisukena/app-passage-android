@@ -1,9 +1,15 @@
 package hive.android.hebron.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Bundle;
@@ -82,6 +88,7 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
         webView = (WebView)findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        webView.clearCache(true);
         webView.setWebViewClient(new WebViewClientLocal());
         webView.setWebChromeClient(new WebChromeClient(){//for java script popup
             @Override
@@ -143,9 +150,12 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
     private static final String SCHEME_PASSAGETELLS = "passagetells";
 
     class WebViewClientLocal extends WebViewClient{
+        boolean errorFlag;
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.i(TAG, url);
+
+            errorFlag = false;
 
             //NO.1 Step1 Select project
             if(url.indexOf("/d/intro.html") > 0){
@@ -273,6 +283,45 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
             return super.shouldOverrideUrlLoading(view, url);
         }
+
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            view.setVisibility(View.INVISIBLE);
+            errorFlag = true;
+            showErrorDialog(failingUrl);
+            super.onReceivedError(view, errorCode, description, failingUrl);
+        }
+        @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            view.setVisibility(errorFlag ? View.INVISIBLE : View.VISIBLE);
+            errorFlag = false;
+            super.onPageFinished(view, url);
+        }
+    }
+    void showErrorDialog(String url){
+        final String errorUrl = url;
+        AlertDialog.Builder alertDlg = new AlertDialog.Builder(this);
+        alertDlg.setTitle(R.string.webview_error_dialog_title);
+        alertDlg.setMessage(R.string.webview_error_dialog_message);
+        alertDlg.setCancelable(false);
+        alertDlg.setPositiveButton(
+                "Reload",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        webView.loadUrl(errorUrl);
+                    }
+                });
+        alertDlg.create().show();
+    }
+    private boolean isNetworkAvailable(){
+        ConnectivityManager cm =  (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return ( info != null && info.isConnected());
     }
 
     void doExecuteApplication(String url){
@@ -320,6 +369,10 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
 
     private ProgressDialog waitDialog;
     void doDownload(){
+        if(!isNetworkAvailable()){
+            showErrorDialog(HOME_URL + PROJECT_HTML);
+            return;
+        }
 
         DataManager.getInstance(this).getCtrlDatas().clear();
 

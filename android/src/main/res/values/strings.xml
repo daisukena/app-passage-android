@@ -8,5 +8,7 @@
     <string name="app_title">Passage Tells Project</string>
     <string name="playing">PLAYING</string>
     <string name="playing_description">Do not close the app while listening.\nPush x only if you want to restart\nthe app from the begining.</string>
+    <string name="webview_error_dialog_title">Webpage not available</string>
+    <string name="webview_error_dialog_message">- Make sure you have a data connection\n- Reload this page later.</string>
 
 </resources>
