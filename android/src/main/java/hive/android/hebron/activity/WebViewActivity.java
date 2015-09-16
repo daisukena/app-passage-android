@@ -318,6 +318,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
                 "Reload",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        //rebinding for network error
+                        unbindBeaconManager();
+                        checkBluetoothAdapter();
                         errorFlag = false;
                         webView.loadUrl(errorUrl);
                     }
@@ -789,7 +792,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
             if (!mBluetoothAdapter.isEnabled()) {
                 Toast.makeText(this, "Please, enable Bluetooth Adapter", Toast.LENGTH_SHORT).show();
             }
-            beaconManager.bind(this);
+            if(!beaconManager.isBound(this)){
+                beaconManager.bind(this);
+            }
         }
     }
 
@@ -910,10 +915,13 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
     @Override
     protected void onPause() {
         super.onPause();
+        unbindBeaconManager();
+    }
+    private void unbindBeaconManager(){
         if(beaconManager.isBound(this)){
             beaconManager.unbind(this);
-//            hasBounded = false;
         }
+
     }
 
     @Override
@@ -934,6 +942,9 @@ public class WebViewActivity extends Activity implements BeaconConsumer, RangeNo
             public void run() {
                 webView.loadUrl(HOME_URL + PROJECT_HTML);
                 webView.clearHistory();
+                //rebinding for network error
+                unbindBeaconManager();
+                checkBluetoothAdapter();
             }
         });
     }
